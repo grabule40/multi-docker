@@ -1,0 +1,23 @@
+language: generic
+sudo: required
+services:
+    - docker
+
+before_install:
+    - docker build -t grabule40/react-test -f ./client/Dockerfile.dev ./client
+    
+script:
+    - docker run -e CI=true grabule40/react-test npm test -- --coverage
+
+after_success:
+    - docker build -t grabule40/multi-client ./client
+    - docker build -t grabule40/multi-nginx ./nginx
+    - docker build -t grabule40/multi-server ./server
+    - docker build -t grabule40/multi-worker ./worker
+    # log int ot the docker cli
+    - echo "$DOCKER_PASSWORD" | docker login -u "DOCKER_ID" --password-stdin
+    #take those images and push them to docker hub
+    - docker push grabule40/multi-client
+    - docker push grabule40/multi-nginx
+    - docker push grabule40/multi-server
+    - docker push grabule40/multi-worker
